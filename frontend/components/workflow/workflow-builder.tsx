@@ -176,11 +176,23 @@ export function WorkflowBuilder() {
   const handleSaveWorkflow = async () => {
     setIsSaving(true)
     try {
-      // TODO: Save to backend
-      console.log("Saving workflow:", workflow)
-      await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate API call
+      const payload = {
+        name: workflow.name,
+        description: workflow.description,
+        modules: workflow.modules,
+        connections: workflow.connections,
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/workflows`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error("Failed to save workflow")
+      // Optionally handle response
+      console.log("Workflow saved:", await res.json())
     } catch (error) {
       console.error("Failed to save workflow:", error)
+      alert("Error saving workflow")
     } finally {
       setIsSaving(false)
     }

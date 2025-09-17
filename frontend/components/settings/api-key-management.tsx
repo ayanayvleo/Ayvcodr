@@ -127,29 +127,34 @@ export function APIKeyManagement() {
     navigator.clipboard.writeText(text)
   }
 
-  const handleCreateKey = () => {
-    const newKey: APIKey = {
-      id: Date.now().toString(),
+  const handleCreateKey = async () => {
+    const payload = {
       name: newKeyData.name,
-      key: `sk-${Date.now().toString(36)}`,
       permissions: newKeyData.permissions,
       rateLimit: newKeyData.rateLimit,
-      usageCount: 0,
-      lastUsed: new Date(),
-      createdAt: new Date(),
-      expiresAt: newKeyData.expiresAt ? new Date(newKeyData.expiresAt) : undefined,
-      isActive: true,
+      expiresAt: newKeyData.expiresAt || null,
+      description: newKeyData.description,
     }
-
-    setAPIKeys((prev) => [...prev, newKey])
-    setIsCreateDialogOpen(false)
-    setNewKeyData({
-      name: "",
-      permissions: [],
-      rateLimit: 1000,
-      expiresAt: "",
-      description: "",
-    })
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api-keys`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error("Failed to create API key")
+      const newKey = await res.json()
+      setAPIKeys((prev) => [...prev, newKey])
+      setIsCreateDialogOpen(false)
+      setNewKeyData({
+        name: "",
+        permissions: [],
+        rateLimit: 1000,
+        expiresAt: "",
+        description: "",
+      })
+    } catch (err) {
+      alert("Error creating API key")
+    }
   }
 
   const handleDeleteKey = (keyId: string) => {

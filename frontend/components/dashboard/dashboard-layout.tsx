@@ -1,7 +1,66 @@
-"use client"
+function CreateAPIButton() {
+  const [open, setOpen] = useState(false)
+  const [apiName, setApiName] = useState("")
+  const [endpoint, setEndpoint] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
+  const handleCreateAPI = async () => {
+    setIsLoading(true)
+    try {
+      const payload = { name: apiName, endpoint }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api-endpoints`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error("Failed to create API endpoint")
+      setOpen(false)
+      setApiName("")
+      setEndpoint("")
+    } catch (err) {
+      alert("Error creating API endpoint")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-green-900/30 border border-green-400/20 transition-all duration-300 hover:shadow-xl hover:shadow-green-900/40">
+          <Plus className="h-4 w-4 mr-2" />
+          Create API
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create New API Endpoint</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="API Name"
+            value={apiName}
+            onChange={e => setApiName(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
+          <input
+            type="text"
+            placeholder="Endpoint URL"
+            value={endpoint}
+            onChange={e => setEndpoint(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
+          <Button onClick={handleCreateAPI} disabled={isLoading || !apiName || !endpoint}>
+            {isLoading ? "Creating..." : "Create API"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+// All imports at the top
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -29,6 +88,8 @@ import {
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -148,13 +209,14 @@ export function DashboardLayout({ children, activeTab = "dashboard" }: Dashboard
             })}
           </div>
 
-          <div className="mt-8">
+          <div className="mt-8 space-y-2">
             <Link href="/builder">
               <Button className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-green-900/30 border border-green-400/20 transition-all duration-300 hover:shadow-xl hover:shadow-green-900/40">
                 <Plus className="h-4 w-4 mr-2" />
                 New Workflow
               </Button>
             </Link>
+            <CreateAPIButton />
           </div>
         </nav>
 
