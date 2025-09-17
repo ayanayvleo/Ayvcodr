@@ -14,7 +14,7 @@ import { Eye, EyeOff, Loader2, Zap } from "lucide-react"
 
 export function RegisterForm() {
   const [formData, setFormData] = useState({
-    name: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -37,22 +37,28 @@ export function RegisterForm() {
     }
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Mock successful registration
-      const mockToken = "mock-jwt-token-" + Date.now()
-      localStorage.setItem("token", mockToken)
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: "1",
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.username || formData.email.split("@")[0],
           email: formData.email,
-          name: formData.name,
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.email}`,
+          password: formData.password,
         }),
-      )
-
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.detail || "Registration failed. Please try again.")
+        setIsLoading(false)
+        return
+      }
+      const data = await res.json()
+      localStorage.setItem("token", data.api_key || data.access_token)
+      localStorage.setItem("user", JSON.stringify({
+        username: data.username,
+        email: data.email,
+        api_key: data.api_key,
+      }))
       router.push("/dashboard")
     } catch (err) {
       setError("Registration failed. Please try again.")
@@ -88,15 +94,15 @@ export function RegisterForm() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-gray-900 font-medium">
-              Full Name
+            <Label htmlFor="username" className="text-gray-900 font-medium">
+              Username
             </Label>
             <Input
-              id="name"
-              name="name"
+              id="username"
+              name="username"
               type="text"
-              placeholder="Enter your full name"
-              value={formData.name}
+              placeholder="Enter your username (used for login)"
+              value={formData.username}
               onChange={handleChange}
               required
               className="h-11"
