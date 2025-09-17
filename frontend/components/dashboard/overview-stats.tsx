@@ -40,37 +40,49 @@ function StatCard({ title, value, description, trend, icon }: StatCardProps) {
   )
 }
 
+import { useEffect, useState } from "react"
+
 export function OverviewStats() {
-  const stats = [
-    {
-      title: "Total API Calls",
-      value: "12,847",
-      description: "Last 30 days",
-      trend: { value: 12.5, isPositive: true },
-      icon: <Activity className="h-4 w-4" />,
-    },
-    {
-      title: "Active Workflows",
-      value: "8",
-      description: "Currently deployed",
-      trend: { value: 2, isPositive: true },
-      icon: <Zap className="h-4 w-4" />,
-    },
-    {
-      title: "Cost Savings",
-      value: "$2,847",
-      description: "vs traditional development",
-      trend: { value: 23.1, isPositive: true },
-      icon: <DollarSign className="h-4 w-4" />,
-    },
-    {
-      title: "Avg Response Time",
-      value: "247ms",
-      description: "Last 24 hours",
-      trend: { value: 5.2, isPositive: false },
-      icon: <Clock className="h-4 w-4" />,
-    },
-  ]
+  const [stats, setStats] = useState<any[]>([])
+  useEffect(() => {
+    fetch("/dashboard/stats")
+      .then((res) => res.json())
+      .then((data) => {
+        setStats([
+          {
+            title: "Total API Calls",
+            value: data.total_api_calls?.toLocaleString() ?? "-",
+            description: "Last 30 days",
+            trend: { value: data.api_calls_trend ?? 0, isPositive: (data.api_calls_trend ?? 0) >= 0 },
+            icon: <Activity className="h-4 w-4" />,
+          },
+          {
+            title: "Active Workflows",
+            value: data.active_workflows?.toString() ?? "-",
+            description: "Currently deployed",
+            trend: { value: data.active_workflows_trend ?? 0, isPositive: (data.active_workflows_trend ?? 0) >= 0 },
+            icon: <Zap className="h-4 w-4" />,
+          },
+          {
+            title: "Cost Savings",
+            value: data.cost_savings ? `$${data.cost_savings}` : "-",
+            description: "vs traditional development",
+            trend: { value: data.cost_savings_trend ?? 0, isPositive: (data.cost_savings_trend ?? 0) >= 0 },
+            icon: <DollarSign className="h-4 w-4" />,
+          },
+          {
+            title: "Avg Response Time",
+            value: data.avg_response_time ? `${data.avg_response_time}ms` : "-",
+            description: "Last 24 hours",
+            trend: { value: data.response_time_trend ?? 0, isPositive: (data.response_time_trend ?? 0) >= 0 },
+            icon: <Clock className="h-4 w-4" />,
+          },
+        ])
+      })
+      .catch(() => {
+        setStats([])
+      })
+  }, [])
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

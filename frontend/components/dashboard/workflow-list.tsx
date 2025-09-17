@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -62,10 +62,18 @@ const mockWorkflows: Workflow[] = [
   },
 ]
 
+
 export function WorkflowList() {
-  const [workflows] = useState<Workflow[]>(mockWorkflows)
+  const [workflows, setWorkflows] = useState<Workflow[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+
+  useEffect(() => {
+    fetch("/dashboard/workflows")
+      .then((res) => res.json())
+      .then((data) => setWorkflows(data))
+      .catch(() => setWorkflows([]))
+  }, [])
 
   const filteredWorkflows = workflows.filter((workflow) => {
     const matchesSearch =
@@ -190,11 +198,11 @@ export function WorkflowList() {
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <div className="flex items-center space-x-1">
                   <Activity className="h-3 w-3" />
-                  <span>{workflow.apiCalls.toLocaleString()} calls</span>
+                  <span>{workflow.apiCalls?.toLocaleString() ?? "-"} calls</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Calendar className="h-3 w-3" />
-                  <span>{workflow.lastUsed.toLocaleDateString()}</span>
+                  <span>{workflow.lastUsed ? new Date(workflow.lastUsed).toLocaleDateString() : "-"}</span>
                 </div>
               </div>
 

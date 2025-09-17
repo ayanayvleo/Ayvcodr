@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -17,44 +18,39 @@ import {
   Cell,
 } from "recharts"
 
-const usageData = [
-  { date: "2024-01-01", calls: 1200, latency: 245 },
-  { date: "2024-01-02", calls: 1350, latency: 238 },
-  { date: "2024-01-03", calls: 1180, latency: 252 },
-  { date: "2024-01-04", calls: 1420, latency: 241 },
-  { date: "2024-01-05", calls: 1680, latency: 235 },
-  { date: "2024-01-06", calls: 1520, latency: 248 },
-  { date: "2024-01-07", calls: 1750, latency: 243 },
-]
-
-const workflowData = [
-  { name: "Sentiment Analysis", calls: 4200, percentage: 35 },
-  { name: "Keyword Extraction", calls: 3100, percentage: 26 },
-  { name: "Custom Model", calls: 2400, percentage: 20 },
-  { name: "Data Processing", calls: 1500, percentage: 12 },
-  { name: "Webhooks", calls: 800, percentage: 7 },
-]
-
-const COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-]
-
 export function UsageAnalytics() {
+  const [apiUsageData, setApiUsageData] = useState<any[]>([])
+  const [workflowData, setWorkflowData] = useState<any[]>([])
+  const COLORS = [
+    "hsl(var(--chart-1))",
+    "hsl(var(--chart-2))",
+    "hsl(var(--chart-3))",
+    "hsl(var(--chart-4))",
+    "hsl(var(--chart-5))",
+  ]
+
+  useEffect(() => {
+    fetch("/dashboard/api-usage-trend")
+      .then((res) => res.json())
+      .then((data) => setApiUsageData(data))
+      .catch(() => setApiUsageData([]))
+    fetch("/dashboard/workflows")
+      .then((res) => res.json())
+      .then((data) => setWorkflowData(data))
+      .catch(() => setWorkflowData([]))
+  }, [])
+
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
       {/* API Usage Trend */}
       <Card className="md:col-span-2">
         <CardHeader>
           <CardTitle>API Usage Trend</CardTitle>
-          <CardDescription>Daily API calls and average response time over the last 7 days</CardDescription>
+          <CardDescription>API calls and latency over time</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={usageData}>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={apiUsageData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" tickFormatter={(value) => new Date(value).toLocaleDateString()} />
               <YAxis yAxisId="calls" orientation="left" />
