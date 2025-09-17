@@ -1,0 +1,6 @@
+version: 1.0
+instance_configuration:
+  cpu: 1 vCPU
+  memory: 2 GB
+image_configuration:
+  port: 8000
