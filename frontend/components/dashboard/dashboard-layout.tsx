@@ -1,3 +1,4 @@
+"use client"
 function CreateAPIButton() {
   const [open, setOpen] = useState(false)
   const [apiName, setApiName] = useState("")
