@@ -1,0 +1,21 @@
+{
+  "name": "AyvCodr",
+  "short_name": "AyvCodr",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#10172a",
+  "theme_color": "#22c55e",
+  "description": "Build powerful AI APIs without code. Visual workflow builder, enterprise security, analytics, and more.",
+  "icons": [
+    {
+      "src": "/placeholder-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/placeholder-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  frontend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    # Uncomment below to connect to backend API container
+    # depends_on:
+    #   - backend
+    # networks:
+    #   - appnet
+# networks:
+#   appnet:
+#     driver: bridge
