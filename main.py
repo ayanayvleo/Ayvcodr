@@ -16,16 +16,26 @@ USER_API_DEFS = {}
 import os
 import smtplib
 from email.mime.text import MIMEText
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="AyvCodr",
     description="AyvCodr API Platform. Docs: https://ayvcodr.com",
     version="1.0.0",
     contact={
-    "name": "AyvCodr",
-    "url": "https://ayvcodr.com",
-    "email": "hello@ayvcodr.com"
+        "name": "AyvCodr",
+        "url": "https://ayvcodr.com",
+        "email": "hello@ayvcodr.com"
     }
+)
+
+# --- CORS Middleware ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://ayvcodr.com", "https://www.ayvcodr.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(auth_router)
