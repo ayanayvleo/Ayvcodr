@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Loader2, Zap } from "lucide-react"
 
 export function LoginForm() {
-  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -21,34 +21,40 @@ export function LoginForm() {
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Mock successful login
-      const mockToken = "mock-jwt-token-" + Date.now()
-      localStorage.setItem("token", mockToken)
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: "1",
-          email,
-          name: email.split("@")[0],
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
+      const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
         }),
-      )
+      });
 
-      router.push("/dashboard")
-    } catch (err) {
-      setError("Invalid email or password. Please try again.")
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || "Login failed");
+      }
+      const data = await res.json();
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("user", JSON.stringify({
+        username,
+        api_key: data.api_key,
+        token_type: data.token_type,
+      }));
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Invalid username or password. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  }  
 
   return (
     <Card className="w-full shadow-xl border-0 bg-white">
@@ -70,15 +76,15 @@ export function LoginForm() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-gray-900 font-medium">
-              Email
+            <Label htmlFor="username" className="text-gray-900 font-medium">
+              Username
             </Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="username"
+              type="text"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
               className="h-11"
             />

@@ -15,28 +15,33 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter()
 
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       const token = localStorage.getItem("token")
-
       if (!token) {
         setIsAuthenticated(false)
         router.push("/login")
         return
       }
-
-      // TODO: Validate token with backend
-      // For now, just check if token exists
       try {
-        // Basic JWT validation (check if it's not expired)
+        // Decode JWT payload
         const payload = JSON.parse(atob(token.split(".")[1]))
-        const isExpired = payload.exp * 1000 < Date.now()
-
-        if (isExpired) {
+        // If token has exp, check expiration
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
           localStorage.removeItem("token")
           setIsAuthenticated(false)
           router.push("/login")
-        } else {
+          return
+        }
+        // Optionally, validate token with backend
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (res.ok) {
           setIsAuthenticated(true)
+        } else {
+          localStorage.removeItem("token")
+          setIsAuthenticated(false)
+          router.push("/login")
         }
       } catch (error) {
         localStorage.removeItem("token")
@@ -44,7 +49,6 @@ export function AuthGuard({ children }: AuthGuardProps) {
         router.push("/login")
       }
     }
-
     checkAuth()
   }, [router])
 

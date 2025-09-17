@@ -20,35 +20,36 @@ export function LoginForm() {
   const [error, setError] = useState("")
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
 
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-      // Mock successful login
-      const mockToken = "mock-jwt-token-" + Date.now()
-      localStorage.setItem("token", mockToken)
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: "1",
-          email,
-          name: email.split("@")[0],
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-        }),
-      )
-
-      router.push("/dashboard")
-    } catch (err) {
-      setError("Invalid email or password. Please try again.")
-    } finally {
-      setIsLoading(false)
+    if (!res.ok) {
+      const data = await res.json();
+      setError(data.detail || "Invalid email or password. Please try again.");
+      return;
     }
+
+    const data = await res.json();
+    // Save token and user info as needed
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    router.push("/dashboard");
+  } catch (err) {
+    setError("Network error. Please try again.");
+  } finally {
+    setIsLoading(false);
   }
+};
 
   return (
     <Card className="w-full shadow-xl border-0 bg-white">
