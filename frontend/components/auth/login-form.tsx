@@ -46,7 +46,10 @@ export function LoginForm() {
       localStorage.setItem("user", JSON.stringify({
         username,
         api_key: data.api_key,
+<<<<<<< HEAD
         token_type: data.token_type,
+=======
+>>>>>>> 5042fd0db01512c57bfea2d358b564f4fb14c88d
       }));
       router.push("/dashboard");
     } catch (err: any) {
