@@ -1,3 +1,26 @@
+def test_create_workflow():
+    payload = {
+        "name": "pytest workflow",
+        "description": "created by test",
+        "endpoint": "/api/pytest"
+    }
+    response = client.post("/workflows", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == payload["name"]
+    assert data["description"] == payload["description"]
+    assert data["endpoint"] == payload["endpoint"]
+
+def test_create_api_endpoint():
+    payload = {
+        "name": "pytest api",
+        "endpoint": "/api/pytest-endpoint"
+    }
+    response = client.post("/api-endpoints", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == payload["name"]
+    assert data["endpoint"] == payload["endpoint"]
 
 import sys
 import os

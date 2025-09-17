@@ -15,6 +15,7 @@ USER_API_DEFS = {}
 
 import os
 from db import SessionLocal, User, Workflow, APICallLog, WorkflowAnalytics
+from sqlalchemy.orm import Session
 import smtplib
 from email.mime.text import MIMEText
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,6 +43,57 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(api_keys_router)
 app.include_router(privacy_router)
+# --- Workflow and API Endpoint Creation ---
+class WorkflowCreateRequest(BaseModel):
+    name: str
+    description: str = ""
+    endpoint: str = ""
+    owner_id: str = "test_owner"
+
+@app.post("/workflows")
+def create_workflow(req: WorkflowCreateRequest, db: Session = Depends(SessionLocal)):
+    workflow = Workflow(
+        name=req.name,
+        description=req.description,
+        endpoint=req.endpoint,
+        status="active",
+        owner_id=req.owner_id
+    )
+    db.add(workflow)
+    db.commit()
+    db.refresh(workflow)
+    return {
+        "id": workflow.id,
+        "name": workflow.name,
+        "description": workflow.description,
+        "status": workflow.status,
+        "endpoint": workflow.endpoint,
+        "createdAt": workflow.created_at,
+    }
+
+class APIEndpointCreateRequest(BaseModel):
+    name: str
+    endpoint: str
+    owner_id: str = "test_owner"
+
+@app.post("/api-endpoints")
+def create_api_endpoint(req: APIEndpointCreateRequest, db: Session = Depends(SessionLocal)):
+    workflow = Workflow(
+        name=req.name,
+        endpoint=req.endpoint,
+        status="active",
+        owner_id=req.owner_id
+    )
+    db.add(workflow)
+    db.commit()
+    db.refresh(workflow)
+    return {
+        "id": workflow.id,
+        "name": workflow.name,
+        "endpoint": workflow.endpoint,
+        "status": workflow.status,
+        "createdAt": workflow.created_at,
+    }
 
 # --- Test Email Endpoint ---
 class EmailTestRequest(BaseModel):
@@ -51,11 +103,11 @@ class EmailTestRequest(BaseModel):
 
 @app.post("/test-email")
 def send_test_email(req: EmailTestRequest):
-    smtp_server = os.getenv("SMTP_SERVER")
-    smtp_port = os.getenv("SMTP_PORT")
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_password = os.getenv("SMTP_PASSWORD")
-    email_from = os.getenv("EMAIL_FROM")
+    smtp_server = os.getenv("SMTP_SERVER") or ""
+    smtp_port = os.getenv("SMTP_PORT") or ""
+    smtp_user = os.getenv("SMTP_USER") or ""
+    smtp_password = os.getenv("SMTP_PASSWORD") or ""
+    email_from = os.getenv("EMAIL_FROM") or ""
     missing = []
     if not smtp_server:
         missing.append("SMTP_SERVER")
@@ -70,18 +122,18 @@ def send_test_email(req: EmailTestRequest):
     if missing:
         return JSONResponse(status_code=500, content={"detail": f"Missing environment variables: {', '.join(missing)}"})
     try:
-        smtp_port = int(smtp_port)
+        smtp_port_int = int(smtp_port)
     except Exception:
         return JSONResponse(status_code=500, content={"detail": "SMTP_PORT must be an integer."})
     msg = MIMEText(req.body)
-    msg["Subject"] = req.subject
-    msg["From"] = email_from
-    msg["To"] = req.to
+    msg["Subject"] = req.subject or ""
+    msg["From"] = email_from or ""
+    msg["To"] = req.to or ""
     try:
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
+        with smtplib.SMTP(smtp_server, smtp_port_int) as server:
             server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.sendmail(email_from, [req.to], msg.as_string())
+            server.login(smtp_user or "", smtp_password or "")
+            server.sendmail(email_from or "", [req.to or ""], msg.as_string())
         return {"detail": f"Test email sent to {req.to}"}
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": str(e)})
