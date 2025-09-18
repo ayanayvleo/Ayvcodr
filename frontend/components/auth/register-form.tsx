@@ -23,6 +23,7 @@ export function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showWelcome, setShowWelcome] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +60,7 @@ export function RegisterForm() {
         email: data.email,
         api_key: data.api_key,
       }))
-      router.push("/dashboard")
+      setShowWelcome(true)
     } catch (err) {
       setError("Registration failed. Please try again.")
     } finally {
@@ -75,8 +76,29 @@ export function RegisterForm() {
   }
 
   return (
-    <Card className="w-full shadow-xl border-0 bg-white">
-      <CardHeader className="space-y-1 text-center">
+    <>
+      {showWelcome && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full text-center animate-fade-in">
+            <div className="mb-4">
+              <span className="text-4xl">🚀</span>
+            </div>
+            <h2 className="text-2xl font-bold text-emerald-700 mb-2">Welcome to Entrepreneurial Innovation!</h2>
+            <p className="text-lg text-gray-700 mb-6">
+              Your journey starts now.<br />
+              <span className="font-semibold text-emerald-600">Dream big, build boldly, and change the world!</span>
+            </p>
+            <Button
+              className="w-full h-12 bg-gradient-to-r from-emerald-600 to-green-500 text-white text-lg font-bold shadow-lg hover:from-emerald-700 hover:to-green-600 transition-all duration-300"
+              onClick={() => router.push("/dashboard")}
+            >
+              Enter Site
+            </Button>
+          </div>
+        </div>
+      )}
+      <Card className="w-full shadow-xl border-0 bg-white">
+        <CardHeader className="space-y-1 text-center">
         <div className="flex items-center justify-center mb-4">
           <div className="p-3 bg-emerald-100 rounded-full">
             <Zap className="h-6 w-6 text-emerald-600" />
@@ -85,8 +107,8 @@ export function RegisterForm() {
         <CardTitle className="text-2xl font-bold text-gray-900">Create Account</CardTitle>
         <CardDescription className="text-gray-600">Start building AI APIs in minutes</CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -207,7 +229,7 @@ export function RegisterForm() {
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col space-y-4">
+          <CardFooter className="flex flex-col space-y-4">
           <Button
             type="submit"
             className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -230,7 +252,7 @@ export function RegisterForm() {
             </Link>
           </div>
         </CardFooter>
-      </form>
-    </Card>
-  )
+        </form>
+      </Card>
+    </>
 }
