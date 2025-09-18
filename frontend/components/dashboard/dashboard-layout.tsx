@@ -1,5 +1,5 @@
 "use client"
-function CreateAPIButton() {
+export function CreateAPIButton() {
   const [open, setOpen] = useState(false)
   const [apiName, setApiName] = useState("")
   const [endpoint, setEndpoint] = useState("")

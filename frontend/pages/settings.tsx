@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
@@ -20,15 +21,33 @@ export default function SettingsPage() {
   }, [router]);
 
   if (!user) {
-    return <div className="p-8 text-center">Loading settings...</div>;
+    return <div className="p-8 text-center text-green-100">Loading settings...</div>;
   }
 
   return (
-    <div className="max-w-md mx-auto p-8 bg-slate-900 rounded-xl shadow-lg mt-12 text-green-100">
-      <h1 className="text-2xl font-bold mb-4">Settings</h1>
-      <div className="mb-2"><strong>Username:</strong> {user.username}</div>
-      <div className="mb-2"><strong>Email:</strong> {user.email}</div>
-      <div className="mt-6 text-sm text-green-400">(Add more settings here as needed)</div>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="w-full max-w-lg p-8 bg-slate-900 rounded-2xl shadow-2xl border border-green-900/30">
+        <h1 className="text-3xl font-bold text-green-100 mb-2">Settings</h1>
+        <p className="text-green-400 mb-6">Manage your account, API keys, and privacy preferences.</p>
+        <div className="bg-slate-800 rounded-xl p-6 mb-4 flex items-center gap-4">
+          <div className="flex items-center justify-center h-16 w-16 rounded-full bg-green-900 text-green-300 text-2xl font-bold">
+            {user.username[0].toUpperCase()}
+          </div>
+          <div>
+            <div className="text-lg font-semibold text-green-100">{user.username}</div>
+            <div className="text-green-400 text-sm">{user.email}</div>
+          </div>
+        </div>
+        <div className="mt-6">
+          <div className="mb-2">
+            <span className="font-semibold text-green-200">Username:</span> <span className="text-green-100">{user.username}</span>
+          </div>
+          <div className="mb-2">
+            <span className="font-semibold text-green-200">Email:</span> <span className="text-green-100">{user.email}</span>
+          </div>
+          <div className="mt-6 text-sm text-green-400">(Add more settings here as needed)</div>
+        </div>
+      </div>
     </div>
   );
 }
