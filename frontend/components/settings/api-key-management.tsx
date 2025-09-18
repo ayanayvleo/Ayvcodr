@@ -85,7 +85,8 @@ export function APIKeyManagement() {
   // Fetch API keys from backend on mount
   useEffect(() => {
     let isMounted = true;
-  fetch(`${process.env.NEXT_PUBLIC_API_URL}/api-keys`)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api-keys` : '/api/api-keys';
+    fetch(apiUrl)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch');
         return res.json();
