@@ -61,8 +61,7 @@ function CreateAPIButton() {
   )
 }
 // All imports at the top
-import type React from "react"
-import { useState } from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -107,15 +106,47 @@ const navigation = [
 
 export function DashboardLayout({ children, activeTab = "dashboard" }: DashboardLayoutProps) {
   const router = useRouter()
-  const [user] = useState({
-    name: "John Doe",
-    email: "john@example.com",
-    initials: "JD",
+  const [user, setUser] = useState({
+    name: "",
+    email: "",
+    initials: "",
   })
+
+  // Load user info from backend
+  React.useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      router.push("/login")
+      return
+    }
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => {
+        setUser({
+          name: data.username,
+          email: data.email,
+          initials: (data.username || "").split(" ").map((w: string) => w[0]).join("").toUpperCase(),
+        })
+      })
+      .catch(() => {
+        localStorage.removeItem("token")
+        router.push("/login")
+      })
+  }, [router])
 
   const handleLogout = () => {
     localStorage.removeItem("token")
     router.push("/login")
+  }
+
+  const handleProfile = () => {
+    router.push("/profile")
+  }
+
+  const handleSettings = () => {
+    router.push("/settings")
   }
 
   return (
@@ -165,11 +196,11 @@ export function DashboardLayout({ children, activeTab = "dashboard" }: Dashboard
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-green-900/30" />
-                <DropdownMenuItem className="text-green-100 hover:bg-green-900/20 focus:bg-green-900/20">
+                <DropdownMenuItem className="text-green-100 hover:bg-green-900/20 focus:bg-green-900/20" onClick={handleProfile}>
                   <User className="mr-2 h-4 w-4 text-green-400" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-green-100 hover:bg-green-900/20 focus:bg-green-900/20">
+                <DropdownMenuItem className="text-green-100 hover:bg-green-900/20 focus:bg-green-900/20" onClick={handleSettings}>
                   <Settings className="mr-2 h-4 w-4 text-green-400" />
                   <span>Settings</span>
                 </DropdownMenuItem>
