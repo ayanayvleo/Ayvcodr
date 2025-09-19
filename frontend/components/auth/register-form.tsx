@@ -50,7 +50,12 @@ export function RegisterForm() {
         return;
       }
       const data = await res.json();
-      localStorage.setItem("token", data.api_key || data.access_token);
+      // Always store JWT token for authentication
+      if (data.access_token) {
+        localStorage.setItem("token", data.access_token);
+      } else if (data.api_key) {
+        localStorage.setItem("token", data.api_key);
+      }
       localStorage.setItem("user", JSON.stringify({
         username: data.username,
         email: data.email,

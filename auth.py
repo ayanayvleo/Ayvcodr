@@ -139,7 +139,18 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
             server.sendmail(email_from or "", [email_to], msg.as_string())
     except Exception as e:
         print(f"Failed to send welcome email: {e}")
-    return {"username": user.username, "email": user.email, "api_key": user.api_key}
+    # Create JWT token for immediate login
+    from jose import jwt
+    SECRET_KEY = "supersecretkey"
+    ALGORITHM = "HS256"
+    token = jwt.encode({"sub": user.username}, SECRET_KEY, algorithm=ALGORITHM)
+    return {
+        "username": user.username,
+        "email": user.email,
+        "api_key": user.api_key,
+        "access_token": token,
+        "token_type": "bearer"
+    }
 
 
 class LoginRequest(BaseModel):
