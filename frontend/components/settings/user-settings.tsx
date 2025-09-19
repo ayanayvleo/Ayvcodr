@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,13 +15,12 @@ export function UserSettings() {
   const [photo, setPhoto] = useState<File | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string>("")
   const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setPhoto(e.target.files[0])
       setPhotoUrl(URL.createObjectURL(e.target.files[0]))
-    } else {
-      setPhoto(null)
     }
   }
 
@@ -41,7 +40,7 @@ export function UserSettings() {
         const data = await res.json()
         setPhotoUrl(data.photoUrl)
         setPhoto(null)
-        // Optionally clear the file input
+        if (fileInputRef.current) fileInputRef.current.value = "";
       }
     } catch (err) {
       // handle error
@@ -178,7 +177,7 @@ export function UserSettings() {
               )}
             </Avatar>
             <div className="space-y-2">
-              <input type="file" accept="image/*" onChange={handlePhotoChange} />
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} />
               <Button variant="outline" size="sm" onClick={handleUploadPhoto} disabled={!photo || uploading}>
                 <Upload className="h-4 w-4 mr-2" />
                 {uploading ? "Uploading..." : "Upload Photo"}
