@@ -177,8 +177,20 @@ export function UserSettings() {
               )}
             </Avatar>
             <div className="space-y-2">
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} />
-              <Button variant="outline" size="sm" onClick={handleUploadPhoto} disabled={!photo || uploading}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                style={{ border: '2px solid #888', padding: '6px', background: '#222', color: '#fff', borderRadius: '6px' }}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleUploadPhoto}
+                disabled={!photo || uploading}
+                style={{ cursor: (!photo || uploading) ? 'not-allowed' : 'pointer', opacity: (!photo || uploading) ? 0.6 : 1 }}
+              >
                 <Upload className="h-4 w-4 mr-2" />
                 {uploading ? "Uploading..." : "Upload Photo"}
               </Button>
