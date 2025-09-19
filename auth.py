@@ -1,17 +1,21 @@
-from fastapi import APIRouter, HTTPException, Depends, status
-from sqlalchemy.orm import Session
-from passlib.context import CryptContext
-from jose import jwt
-from fastapi.security import OAuth2PasswordBearer
-import secrets
-from db import SessionLocal, User
-# Move get_db above get_current_user to fix NameError
+# --- Profile Photo Upload Endpoint ---
+# Database session dependency
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File, Request
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+from passlib.context import CryptContext
+from jose import jwt
+import secrets
+import os
+import shutil
+from db import SessionLocal, User
 from pydantic import BaseModel
 
 
@@ -31,7 +35,7 @@ class PasswordResetConfirm(BaseModel):
 # Place these endpoints after auth_router is defined
 # ...existing code...
 
-# (Insert these after all other endpoint definitions, before the end of the file)
+
 
 SECRET_KEY = "supersecretkey"
 ALGORITHM = "HS256"
@@ -102,8 +106,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_api_key() -> str:
     return secrets.token_urlsafe(24)
 
-
 class RegisterRequest(BaseModel):
+    username: str
+    email: str
+    password: str
     username: str
     email: str
     password: str
@@ -153,9 +159,24 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     }
 
 
+
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+# Move profile photo endpoint below auth_router definition
+@auth_router.post("/profile/photo")
+def upload_profile_photo(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    ext = file.filename.split('.')[-1] if file.filename else 'jpg'
+    filename = f"{current_user.username}.{ext}"
+    save_dir = "profile_photos"
+    os.makedirs(save_dir, exist_ok=True)
+    save_path = os.path.join(save_dir, filename)
+    with open(save_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    # Return direct URL for frontend display
+    photo_url = f"/profile_photos/{filename}"
+    return {"photoUrl": photo_url}
 
 
 @auth_router.post("/login")

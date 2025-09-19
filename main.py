@@ -1,3 +1,10 @@
+from fastapi.staticfiles import StaticFiles
+import os
+
+# Ensure profile_photos directory exists
+os.makedirs("profile_photos", exist_ok=True)
+
+from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI, Header, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -30,6 +37,9 @@ app = FastAPI(
         "email": "hello@ayvcodr.com"
     }
 )
+
+# Serve profile_photos as static files
+app.mount("/profile_photos", StaticFiles(directory="profile_photos"), name="profile_photos")
 
 # --- CORS Middleware ---
 app.add_middleware(
