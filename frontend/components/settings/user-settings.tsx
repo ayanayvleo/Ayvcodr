@@ -177,13 +177,34 @@ export function UserSettings() {
               )}
             </Avatar>
             <div className="space-y-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-                style={{ border: '2px solid #888', padding: '6px', background: '#222', color: '#fff', borderRadius: '6px' }}
-              />
+              <label htmlFor="profile-photo-upload" style={{ display: 'inline-block' }}>
+                <input
+                  id="profile-photo-upload"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  style={{ display: 'none' }}
+                />
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '10px 24px',
+                    background: 'linear-gradient(90deg,#22c55e 0%,#16a34a 100%)',
+                    color: '#fff',
+                    borderRadius: '8px',
+                    boxShadow: '0 0 12px 2px #22c55e',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    marginRight: '12px',
+                    transition: 'box-shadow 0.2s',
+                  }}
+                  onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                >
+                  Choose Photo
+                </span>
+              </label>
               <Button
                 variant="outline"
                 size="sm"
