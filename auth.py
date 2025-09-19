@@ -118,6 +118,27 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+    # Send welcome email
+    import os, smtplib
+    from email.mime.text import MIMEText
+    smtp_server = os.getenv("SMTP_SERVER") or ""
+    smtp_port = os.getenv("SMTP_PORT") or ""
+    smtp_user = os.getenv("SMTP_USER") or ""
+    smtp_password = os.getenv("SMTP_PASSWORD") or ""
+    email_from = os.getenv("EMAIL_FROM") or ""
+    try:
+        smtp_port_int = int(smtp_port)
+        email_to = str(user.email)
+        msg = MIMEText(f"Welcome to AyvCodr, {user.username}! Your account has been created. Dream big, build boldly, and change the world!")
+        msg["Subject"] = "Welcome to AyvCodr!"
+        msg["From"] = email_from or ""
+        msg["To"] = email_to
+        with smtplib.SMTP(smtp_server, smtp_port_int) as server:
+            server.starttls()
+            server.login(smtp_user or "", smtp_password or "")
+            server.sendmail(email_from or "", [email_to], msg.as_string())
+    except Exception as e:
+        print(f"Failed to send welcome email: {e}")
     return {"username": user.username, "email": user.email, "api_key": user.api_key}
 
 
