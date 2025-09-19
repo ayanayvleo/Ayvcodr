@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,14 +12,57 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Save, Upload, Bell, Shield, Moon, Sun, Globe } from "lucide-react"
 
 export function UserSettings() {
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [photoUrl, setPhotoUrl] = useState<string>("")
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setPhoto(e.target.files[0])
+      setPhotoUrl(URL.createObjectURL(e.target.files[0]))
+    }
+  }
+
+  const handleUploadPhoto = async () => {
+    if (!photo) return
+    const token = localStorage.getItem("token")
+    const formData = new FormData()
+    formData.append("file", photo) // FastAPI expects 'file' as the key
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/photo`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setPhotoUrl(data.photoUrl)
+    }
+  }
   const [profile, setProfile] = useState({
-    name: "John Doe",
-    email: "john@example.com",
-    company: "Acme Corp",
-    bio: "AI enthusiast and developer building the future of automation.",
+    name: "",
+    email: "",
+    company: "",
+    bio: "",
     timezone: "America/New_York",
     language: "en",
   })
+
+  React.useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (!token) return
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setProfile((prev) => ({
+          ...prev,
+          name: data.username || "",
+          email: data.email || "",
+          // Add company, bio, timezone, language if available from backend
+        }))
+      })
+      .catch(() => {})
+  }, [])
 
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -42,9 +85,23 @@ export function UserSettings() {
   const handleSaveProfile = async () => {
     setIsSaving(true)
     try {
-      // TODO: Save to backend
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      console.log("Profile saved:", profile)
+      const token = localStorage.getItem("token")
+      if (!token) throw new Error("Not authenticated")
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          username: profile.name,
+          email: profile.email,
+          // Add company, bio, timezone, language if supported by backend
+        }),
+      })
+      if (!res.ok) throw new Error("Failed to save profile")
+      const data = await res.json()
+      setProfile((prev) => ({ ...prev, name: data.username, email: data.email }))
     } catch (error) {
       console.error("Failed to save profile:", error)
     } finally {
@@ -97,15 +154,20 @@ export function UserSettings() {
         <CardContent className="space-y-6">
           <div className="flex items-center space-x-4">
             <Avatar className="h-20 w-20">
-              <AvatarFallback className="text-lg">
-                {profile.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </AvatarFallback>
+              {photoUrl ? (
+                <img src={photoUrl} alt="Profile" className="h-20 w-20 rounded-full object-cover" />
+              ) : (
+                <AvatarFallback className="text-lg">
+                  {profile.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </AvatarFallback>
+              )}
             </Avatar>
             <div className="space-y-2">
-              <Button variant="outline" size="sm">
+              <input type="file" accept="image/*" onChange={handlePhotoChange} />
+              <Button variant="outline" size="sm" onClick={handleUploadPhoto} disabled={!photo}>
                 <Upload className="h-4 w-4 mr-2" />
                 Upload Photo
               </Button>

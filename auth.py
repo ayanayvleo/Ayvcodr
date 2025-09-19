@@ -1,3 +1,8 @@
+
+
+
+
+# --- Notification and Preference Settings Endpoints ---
 # --- Profile Photo Upload Endpoint ---
 # Database session dependency
 def get_db():
@@ -265,3 +270,37 @@ def reset_password(req: PasswordResetConfirm, db: Session = Depends(get_db)):
     # Remove token after use
     del password_reset_tokens[req.token]
     return {"msg": "Password has been reset successfully"}
+
+
+# --- Notification and Preference Settings Endpoints ---
+from typing import Dict
+
+class NotificationSettings(BaseModel):
+    emailNotifications: bool
+    workflowAlerts: bool
+    usageAlerts: bool
+    securityAlerts: bool
+    marketingEmails: bool
+    weeklyReports: bool
+
+class PreferenceSettings(BaseModel):
+    theme: str
+    dateFormat: str
+    timeFormat: str
+    defaultWorkflowVisibility: str
+
+# In-memory store for demo (replace with DB in production)
+user_notification_settings: Dict[str, NotificationSettings] = {}
+user_preference_settings: Dict[str, PreferenceSettings] = {}
+
+@auth_router.put("/profile/notifications")
+def save_notifications(settings: NotificationSettings, current_user: User = Depends(get_current_user)):
+    user_notification_settings[str(current_user.username)] = settings
+    return {"msg": "Notification settings saved", "settings": settings}
+
+@auth_router.put("/profile/preferences")
+def save_preferences(settings: PreferenceSettings, current_user: User = Depends(get_current_user)):
+    user_preference_settings[str(current_user.username)] = settings
+    return {"msg": "Preference settings saved", "settings": settings}
+
+# --- Notification and Preference Settings Endpoints ---
