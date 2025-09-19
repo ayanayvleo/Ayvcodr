@@ -141,12 +141,13 @@ export function DashboardLayout({ children, activeTab = "dashboard" }: Dashboard
     router.push("/login")
   }
 
+  // Route both Profile and Settings to dashboard/settings
   const handleProfile = () => {
-    router.push("/profile")
+    router.push("/dashboard/settings")
   }
 
   const handleSettings = () => {
-    router.push("/settings")
+    router.push("/dashboard/settings")
   }
 
   return (
