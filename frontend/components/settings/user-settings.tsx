@@ -14,27 +14,39 @@ import { Save, Upload, Bell, Shield, Moon, Sun, Globe } from "lucide-react"
 export function UserSettings() {
   const [photo, setPhoto] = useState<File | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string>("")
+  const [uploading, setUploading] = useState(false)
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setPhoto(e.target.files[0])
       setPhotoUrl(URL.createObjectURL(e.target.files[0]))
+    } else {
+      setPhoto(null)
     }
   }
 
   const handleUploadPhoto = async () => {
     if (!photo) return
+    setUploading(true)
     const token = localStorage.getItem("token")
     const formData = new FormData()
     formData.append("file", photo) // FastAPI expects 'file' as the key
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/photo`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    })
-    if (res.ok) {
-      const data = await res.json()
-      setPhotoUrl(data.photoUrl)
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/photo`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setPhotoUrl(data.photoUrl)
+        setPhoto(null)
+        // Optionally clear the file input
+      }
+    } catch (err) {
+      // handle error
+    } finally {
+      setUploading(false)
     }
   }
   const [profile, setProfile] = useState({
@@ -167,9 +179,9 @@ export function UserSettings() {
             </Avatar>
             <div className="space-y-2">
               <input type="file" accept="image/*" onChange={handlePhotoChange} />
-              <Button variant="outline" size="sm" onClick={handleUploadPhoto} disabled={!photo}>
+              <Button variant="outline" size="sm" onClick={handleUploadPhoto} disabled={!photo || uploading}>
                 <Upload className="h-4 w-4 mr-2" />
-                Upload Photo
+                {uploading ? "Uploading..." : "Upload Photo"}
               </Button>
               <p className="text-xs text-muted-foreground">JPG, PNG or GIF. Max size 2MB.</p>
             </div>
