@@ -1,3 +1,4 @@
+"use client";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { APIKeyManagement } from "@/components/settings/api-key-management";
 
