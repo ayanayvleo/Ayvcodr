@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import { Alert } from "@/components/ui/alert"
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null)
+  const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,7 +47,12 @@ export function UserSettings() {
         if (fileInputRef.current) fileInputRef.current.value = "";
         setFeedback({ type: "success", message: "Profile photo uploaded successfully!" })
       } else {
-        setFeedback({ type: "error", message: "Failed to upload photo." })
+        let errorMsg = "Failed to upload photo."
+        try {
+          const errData = await res.json()
+          if (errData.detail) errorMsg += ` ${errData.detail}`
+        } catch {}
+        setFeedback({ type: "error", message: errorMsg })
       }
     } catch (err) {
       setFeedback({ type: "error", message: "Error uploading photo." })
@@ -117,12 +123,19 @@ export function UserSettings() {
           email: profile.email,
         }),
       })
-      if (!res.ok) throw new Error("Failed to save profile")
+      if (!res.ok) {
+        let errorMsg = "Failed to save profile."
+        try {
+          const errData = await res.json()
+          if (errData.detail) errorMsg += ` ${errData.detail}`
+        } catch {}
+        throw new Error(errorMsg)
+      }
       const data = await res.json()
       setProfile((prev) => ({ ...prev, name: data.username, email: data.email }))
       setFeedback({ type: "success", message: "Profile saved successfully!" })
-    } catch (error) {
-      setFeedback({ type: "error", message: "Failed to save profile." })
+    } catch (error: any) {
+      setFeedback({ type: "error", message: error?.message || "Failed to save profile." })
     } finally {
       setIsSaving(false)
     }
@@ -142,10 +155,17 @@ export function UserSettings() {
         },
         body: JSON.stringify(notifications),
       })
-      if (!res.ok) throw new Error("Failed to save notifications")
+      if (!res.ok) {
+        let errorMsg = "Failed to save notifications."
+        try {
+          const errData = await res.json()
+          if (errData.detail) errorMsg += ` ${errData.detail}`
+        } catch {}
+        throw new Error(errorMsg)
+      }
       setFeedback({ type: "success", message: "Notification settings saved!" })
-    } catch (error) {
-      setFeedback({ type: "error", message: "Failed to save notifications." })
+    } catch (error: any) {
+      setFeedback({ type: "error", message: error?.message || "Failed to save notifications." })
     } finally {
       setIsSaving(false)
     }
@@ -165,19 +185,37 @@ export function UserSettings() {
         },
         body: JSON.stringify(preferences),
       })
-      if (!res.ok) throw new Error("Failed to save preferences")
+      if (!res.ok) {
+        let errorMsg = "Failed to save preferences."
+        try {
+          const errData = await res.json()
+          if (errData.detail) errorMsg += ` ${errData.detail}`
+        } catch {}
+        throw new Error(errorMsg)
+      }
       setFeedback({ type: "success", message: "Preferences saved!" })
-    } catch (error) {
-      setFeedback({ type: "error", message: "Failed to save preferences." })
+    } catch (error: any) {
+      setFeedback({ type: "error", message: error?.message || "Failed to save preferences." })
     } finally {
       setIsSaving(false)
     }
   }
 
+  // Auto-clear feedback after 5 seconds
+  useEffect(() => {
+    if (feedback) {
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
+      feedbackTimeoutRef.current = setTimeout(() => setFeedback(null), 5000)
+    }
+    return () => {
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current)
+    }
+  }, [feedback])
+
   return (
     <div className="space-y-6">
       {feedback && (
-        <Alert variant={feedback.type === "success" ? "success" : "destructive"}>
+        <Alert variant={feedback.type === "success" ? "default" : "destructive"}>
           {feedback.message}
         </Alert>
       )}
