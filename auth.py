@@ -52,6 +52,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 class UserProfile(BaseModel):
     username: str
     email: str
+    photo_url: str = ""
 
 # Move get_db above get_current_user to fix NameError
 
@@ -75,7 +76,14 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 @auth_router.get("/profile", response_model=UserProfile)
 def get_profile(current_user: User = Depends(get_current_user)):
-    return {"username": current_user.username, "email": current_user.email}
+    photo_url = f"/profile_photos/{current_user.username}.jpg"
+    # Check for other extensions if needed
+    for ext in ["png", "jpeg", "gif"]:
+        alt_path = f"profile_photos/{current_user.username}.{ext}"
+        if os.path.exists(alt_path):
+            photo_url = f"/profile_photos/{current_user.username}.{ext}"
+            break
+    return {"username": current_user.username, "email": current_user.email, "photo_url": photo_url}
 
 from fastapi import Request
 
@@ -179,7 +187,11 @@ def upload_profile_photo(file: UploadFile = File(...), db: Session = Depends(get
     save_path = os.path.join(save_dir, filename)
     with open(save_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-    # Return direct URL for frontend display
+    # Optionally, remove old photos with other extensions
+    for old_ext in ["jpg", "png", "jpeg", "gif"]:
+        old_file = os.path.join(save_dir, f"{current_user.username}.{old_ext}")
+        if old_ext != ext and os.path.exists(old_file):
+            os.remove(old_file)
     photo_url = f"/profile_photos/{filename}"
     return {"photoUrl": photo_url}
 

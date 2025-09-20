@@ -1,6 +1,8 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
+import { Alert } from "@/components/ui/alert"
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null)
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,9 +29,10 @@ export function UserSettings() {
   const handleUploadPhoto = async () => {
     if (!photo) return
     setUploading(true)
+    setFeedback(null)
     const token = localStorage.getItem("token")
     const formData = new FormData()
-    formData.append("file", photo) // FastAPI expects 'file' as the key
+    formData.append("file", photo)
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/photo`, {
         method: "POST",
@@ -41,9 +44,12 @@ export function UserSettings() {
         setPhotoUrl(data.photoUrl)
         setPhoto(null)
         if (fileInputRef.current) fileInputRef.current.value = "";
+        setFeedback({ type: "success", message: "Profile photo uploaded successfully!" })
+      } else {
+        setFeedback({ type: "error", message: "Failed to upload photo." })
       }
     } catch (err) {
-      // handle error
+      setFeedback({ type: "error", message: "Error uploading photo." })
     } finally {
       setUploading(false)
     }
@@ -71,6 +77,7 @@ export function UserSettings() {
           email: data.email || "",
           // Add company, bio, timezone, language if available from backend
         }))
+        if (data.photo_url) setPhotoUrl(data.photo_url)
       })
       .catch(() => {})
   }, [])
@@ -95,6 +102,7 @@ export function UserSettings() {
 
   const handleSaveProfile = async () => {
     setIsSaving(true)
+    setFeedback(null)
     try {
       const token = localStorage.getItem("token")
       if (!token) throw new Error("Not authenticated")
@@ -107,14 +115,14 @@ export function UserSettings() {
         body: JSON.stringify({
           username: profile.name,
           email: profile.email,
-          // Add company, bio, timezone, language if supported by backend
         }),
       })
       if (!res.ok) throw new Error("Failed to save profile")
       const data = await res.json()
       setProfile((prev) => ({ ...prev, name: data.username, email: data.email }))
+      setFeedback({ type: "success", message: "Profile saved successfully!" })
     } catch (error) {
-      console.error("Failed to save profile:", error)
+      setFeedback({ type: "error", message: "Failed to save profile." })
     } finally {
       setIsSaving(false)
     }
@@ -122,12 +130,22 @@ export function UserSettings() {
 
   const handleSaveNotifications = async () => {
     setIsSaving(true)
+    setFeedback(null)
     try {
-      // TODO: Save to backend
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      console.log("Notifications saved:", notifications)
+      const token = localStorage.getItem("token")
+      if (!token) throw new Error("Not authenticated")
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/notifications`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(notifications),
+      })
+      if (!res.ok) throw new Error("Failed to save notifications")
+      setFeedback({ type: "success", message: "Notification settings saved!" })
     } catch (error) {
-      console.error("Failed to save notifications:", error)
+      setFeedback({ type: "error", message: "Failed to save notifications." })
     } finally {
       setIsSaving(false)
     }
@@ -135,12 +153,22 @@ export function UserSettings() {
 
   const handleSavePreferences = async () => {
     setIsSaving(true)
+    setFeedback(null)
     try {
-      // TODO: Save to backend
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      console.log("Preferences saved:", preferences)
+      const token = localStorage.getItem("token")
+      if (!token) throw new Error("Not authenticated")
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/preferences`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(preferences),
+      })
+      if (!res.ok) throw new Error("Failed to save preferences")
+      setFeedback({ type: "success", message: "Preferences saved!" })
     } catch (error) {
-      console.error("Failed to save preferences:", error)
+      setFeedback({ type: "error", message: "Failed to save preferences." })
     } finally {
       setIsSaving(false)
     }
@@ -148,6 +176,11 @@ export function UserSettings() {
 
   return (
     <div className="space-y-6">
+      {feedback && (
+        <Alert variant={feedback.type === "success" ? "success" : "destructive"}>
+          {feedback.message}
+        </Alert>
+      )}
       <div>
         <h2 className="text-2xl font-bold">User Settings</h2>
         <p className="text-muted-foreground">Manage your account settings and preferences</p>
