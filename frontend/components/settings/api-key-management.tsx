@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Alert } from "@/components/ui/alert"
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null)
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -85,15 +87,17 @@ export function APIKeyManagement() {
   // Fetch API keys from backend on mount
   useEffect(() => {
     let isMounted = true;
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api-keys` : '/api/api-keys';
-    fetch(apiUrl)
+    const token = localStorage.getItem("token")
+    const userId = localStorage.getItem("user_id")
+    if (!userId) return;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api-keys?user_id=${userId}` : `/api/api-keys?user_id=${userId}`;
+    fetch(apiUrl, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch');
         return res.json();
       })
       .then((data) => {
         if (isMounted) {
-          // Parse date fields if they are strings
           setAPIKeys(
             data.map((k: any) => ({
               ...k,
@@ -105,7 +109,6 @@ export function APIKeyManagement() {
         }
       })
       .catch(() => {
-        // fallback to mock data if fetch fails
         if (isMounted) setAPIKeys(mockAPIKeys);
       });
     return () => { isMounted = false; };
@@ -129,17 +132,21 @@ export function APIKeyManagement() {
   }
 
   const handleCreateKey = async () => {
+    setFeedback(null)
+    const token = localStorage.getItem("token")
+    const userId = localStorage.getItem("user_id")
+    if (!userId) return setFeedback({ type: "error", message: "User not authenticated." })
     const payload = {
       name: newKeyData.name,
-      permissions: newKeyData.permissions,
-      rateLimit: newKeyData.rateLimit,
-      expiresAt: newKeyData.expiresAt || null,
-      description: newKeyData.description,
+      permissions: newKeyData.permissions.join(","),
+      rate_limit: newKeyData.rateLimit,
+      expires_at: newKeyData.expiresAt || null,
+      workflow_permissions: {},
     }
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api-keys`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api-keys?user_id=${userId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
       })
       if (!res.ok) throw new Error("Failed to create API key")
@@ -153,17 +160,56 @@ export function APIKeyManagement() {
         expiresAt: "",
         description: "",
       })
+      setFeedback({ type: "success", message: "API key created successfully!" })
     } catch (err) {
-      alert("Error creating API key")
+      setFeedback({ type: "error", message: "Error creating API key." })
     }
   }
 
-  const handleDeleteKey = (keyId: string) => {
-    setAPIKeys((prev) => prev.filter((key) => key.id !== keyId))
+  const handleDeleteKey = async (keyId: string) => {
+    setFeedback(null)
+    const token = localStorage.getItem("token")
+    const userId = localStorage.getItem("user_id")
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api-keys/${keyId}?user_id=${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error("Failed to delete API key")
+      setAPIKeys((prev) => prev.filter((key) => key.id !== keyId))
+      setFeedback({ type: "success", message: "API key deleted." })
+    } catch (err) {
+      setFeedback({ type: "error", message: "Error deleting API key." })
+    }
   }
 
-  const toggleKeyStatus = (keyId: string) => {
-    setAPIKeys((prev) => prev.map((key) => (key.id === keyId ? { ...key, isActive: !key.isActive } : key)))
+  const toggleKeyStatus = async (keyId: string) => {
+    setFeedback(null)
+    const token = localStorage.getItem("token")
+    const userId = localStorage.getItem("user_id")
+    const key = apiKeys.find((k) => k.id === keyId)
+    if (!key) return
+    const payload = {
+      name: key.name,
+      permissions: key.permissions.join(","),
+      rate_limit: key.rateLimit,
+      expires_at: key.expiresAt || null,
+      workflow_permissions: {},
+      is_active: !key.isActive,
+    }
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api-keys/${keyId}?user_id=${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error("Failed to update API key")
+      const updatedKey = await res.json()
+      setAPIKeys((prev) => prev.map((k) => (k.id === keyId ? updatedKey : k)))
+      setFeedback({ type: "success", message: "API key status updated." })
+    } catch (err) {
+      setFeedback({ type: "error", message: "Error updating API key." })
+    }
   }
 
   const getPermissionColor = (permission: string) => {
@@ -187,6 +233,11 @@ export function APIKeyManagement() {
 
   return (
     <div className="space-y-6">
+      {feedback && (
+        <Alert variant={feedback.type === "success" ? "default" : "destructive"}>
+          {feedback.message}
+        </Alert>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">API Keys</h2>
