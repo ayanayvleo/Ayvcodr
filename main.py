@@ -1,3 +1,25 @@
+# --- Dashboard Stats Endpoint ---
+@app.get("/dashboard/stats")
+def get_dashboard_stats():
+    # Example static data; replace with real DB queries as needed
+    return {
+        "total_api_calls": 12345,
+        "active_users": 42,
+        "workflows": 7,
+        "avg_latency_ms": 210,
+    }
+
+# --- Dashboard API Usage Trend Endpoint ---
+@app.get("/dashboard/api-usage-trend")
+def get_api_usage_trend():
+    # Example static trend data; replace with real analytics as needed
+    return [
+        {"date": "2025-09-01", "calls": 100, "latency": 200},
+        {"date": "2025-09-02", "calls": 120, "latency": 210},
+        {"date": "2025-09-03", "calls": 90, "latency": 205},
+        {"date": "2025-09-04", "calls": 130, "latency": 215},
+    ]
+
 from fastapi.staticfiles import StaticFiles
 import os
 
@@ -37,6 +59,28 @@ app = FastAPI(
         "email": "hello@ayvcodr.com"
     }
 )
+
+# --- Dashboard Stats Endpoint ---
+@app.get("/dashboard/stats")
+def get_dashboard_stats():
+    # Example static data; replace with real DB queries as needed
+    return {
+        "total_api_calls": 12345,
+        "active_users": 42,
+        "workflows": 7,
+        "avg_latency_ms": 210,
+    }
+
+# --- Dashboard API Usage Trend Endpoint ---
+@app.get("/dashboard/api-usage-trend")
+def get_api_usage_trend():
+    # Example static trend data; replace with real analytics as needed
+    return [
+        {"date": "2025-09-01", "calls": 100, "latency": 200},
+        {"date": "2025-09-02", "calls": 120, "latency": 210},
+        {"date": "2025-09-03", "calls": 90, "latency": 205},
+        {"date": "2025-09-04", "calls": 130, "latency": 215},
+    ]
 
 # Serve profile_photos as static files
 app.mount("/profile_photos", StaticFiles(directory="profile_photos"), name="profile_photos")
