@@ -1,4 +1,33 @@
-"use client"
+"use client";
+// All imports at the top
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Bot,
+  Plus,
+  Search,
+  Bell,
+  Settings,
+  LogOut,
+  LayoutDashboard,
+  Workflow,
+  BarChart3,
+  Key,
+  User,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 export function CreateAPIButton() {
   const [open, setOpen] = useState(false)
   const [apiName, setApiName] = useState("")
@@ -60,35 +89,6 @@ export function CreateAPIButton() {
     </Dialog>
   )
 }
-// All imports at the top
-import React, { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  Bot,
-  Plus,
-  Search,
-  Bell,
-  Settings,
-  LogOut,
-  LayoutDashboard,
-  Workflow,
-  BarChart3,
-  Key,
-  User,
-} from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 
 interface DashboardLayoutProps {
