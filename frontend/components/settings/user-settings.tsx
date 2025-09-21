@@ -2,8 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react"
 import { Alert } from "@/components/ui/alert"
-  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null)
-  const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +13,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Save, Upload, Bell, Shield, Moon, Sun, Globe } from "lucide-react"
 
 export function UserSettings() {
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null)
+  const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [photo, setPhoto] = useState<File | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string>("")
   const [uploading, setUploading] = useState(false)
