@@ -1,0 +1,143 @@
+spec_version: 2.0
+
+description: AyvCodr - AI API Platform with Granular Management and Privacy Toolkit
+
+metadata:
+  template_name: ayvcodr-aws-deployment
+  template_version: 1.0.0
+  
+inputs:
+  - domain_name:
+      type: string
+      default: "ayvcodr.com"
+      description: "Primary domain name for the application"
+  
+  - environment:
+      type: string
+      default: "production"
+      allowed_values: ["development", "staging", "production"]
+      description: "Deployment environment"
+  
+  - instance_type:
+      type: string
+      default: "t3.medium"
+      allowed_values: ["t3.small", "t3.medium", "t3.large", "c5.large"]
+      description: "EC2 instance type for backend services"
+  
+  - enable_ssl:
+      type: boolean
+      default: true
+      description: "Enable SSL certificate via AWS Certificate Manager"
+  
+  - database_instance_class:
+      type: string
+      default: "db.t3.micro"
+      allowed_values: ["db.t3.micro", "db.t3.small", "db.t3.medium"]
+      description: "RDS instance class for PostgreSQL database"
+
+outputs:
+  - frontend_url:
+      value: "https://{{ .inputs.domain_name }}"
+      description: "Frontend application URL"
+  
+  - api_url:
+      value: "https://{{ .inputs.domain_name }}/api"
+      description: "Backend API URL"
+  
+  - database_endpoint:
+      value: "{{ .grains.database.outputs.endpoint }}"
+      description: "RDS database endpoint"
+
+grains:
+  # Security Foundation
+  - security:
+      kind: terraform
+      spec: infrastructure/security.tf
+      inputs:
+        - environment: "{{ .inputs.environment }}"
+        - domain_name: "{{ .inputs.domain_name }}"
+        - vpc_id: "{{ .grains.networking.outputs.vpc_id }}"
+      depends_on:
+        - networking
+
+  # VPC and Networking
+  - networking:
+      kind: terraform
+      spec: infrastructure/networking.tf
+      inputs:
+        - environment: "{{ .inputs.environment }}"
+        - domain_name: "{{ .inputs.domain_name }}"
+  
+  # Database
+  - database:
+      kind: terraform
+      spec: infrastructure/database.tf
+      inputs:
+        - environment: "{{ .inputs.environment }}"
+        - instance_class: "{{ .inputs.database_instance_class }}"
+        - vpc_id: "{{ .grains.networking.outputs.vpc_id }}"
+        - private_subnet_ids: "{{ .grains.networking.outputs.private_subnet_ids }}"
+      depends_on:
+        - networking
+  
+  # Backend Services
+  - backend:
+      kind: terraform
+      spec: infrastructure/backend.tf
+      inputs:
+        - environment: "{{ .inputs.environment }}"
+        - instance_type: "{{ .inputs.instance_type }}"
+        - vpc_id: "{{ .grains.networking.outputs.vpc_id }}"
+        - private_subnet_ids: "{{ .grains.networking.outputs.private_subnet_ids }}"
+        - database_url: "{{ .grains.database.outputs.connection_string }}"
+        - domain_name: "{{ .inputs.domain_name }}"
+      depends_on:
+        - networking
+        - database
+        - security
+  
+  # Frontend
+  - frontend:
+      kind: terraform
+      spec: infrastructure/frontend.tf
+      inputs:
+        - environment: "{{ .inputs.environment }}"
+        - domain_name: "{{ .inputs.domain_name }}"
+        - api_endpoint: "{{ .grains.backend.outputs.api_endpoint }}"
+        - enable_ssl: "{{ .inputs.enable_ssl }}"
+      depends_on:
+        - backend
+  
+  # Load Balancer and SSL
+  - load_balancer:
+      kind: terraform
+      spec: infrastructure/load_balancer.tf
+      inputs:
+        - environment: "{{ .inputs.environment }}"
+        - domain_name: "{{ .inputs.domain_name }}"
+        - vpc_id: "{{ .grains.networking.outputs.vpc_id }}"
+        - public_subnet_ids: "{{ .grains.networking.outputs.public_subnet_ids }}"
+        - backend_target_group: "{{ .grains.backend.outputs.target_group_arn }}"
+        - frontend_s3_bucket: "{{ .grains.frontend.outputs.s3_bucket_domain }}"
+        - enable_ssl: "{{ .inputs.enable_ssl }}"
+      depends_on:
+        - networking
+        - backend
+        - frontend
+
+  # Monitoring and Logging
+  - monitoring:
+      kind: terraform
+      spec: infrastructure/monitoring.tf
+      inputs:
+        - environment: "{{ .inputs.environment }}"
+        - vpc_id: "{{ .grains.networking.outputs.vpc_id }}"
+        - ecs_cluster_name: "{{ .grains.backend.outputs.cluster_name }}"
+        - ecs_service_name: "{{ .grains.backend.outputs.service_name }}"
+        - alb_arn: "{{ .grains.load_balancer.outputs.alb_dns_name }}"
+        - db_instance_identifier: "ayvcodr-{{ .inputs.environment }}-db"
+      depends_on:
+        - networking
+        - backend
+        - load_balancer
+        - database

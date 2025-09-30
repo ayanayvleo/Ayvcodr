@@ -1,6 +1,24 @@
+from fastapi import FastAPI
+
+app = FastAPI(
+    title="AyvCodr",
+    description="AyvCodr API Platform. Docs: https://ayvcodr.com",
+    version="1.0.0",
+    contact={
+        "name": "AyvCodr",
+        "url": "https://ayvcodr.com",
+        "email": "hello@ayvcodr.com"
+    }
+)
+
+# Health check endpoint for load balancer
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "timestamp": "2025-09-30", "service": "AyvCodr API"}
+
 # --- Dashboard Stats Endpoint ---
 @app.get("/dashboard/stats")
-def get_dashboard_stats():
+def get_dashboard_stats_example():
     # Example static data; replace with real DB queries as needed
     return {
         "total_api_calls": 12345,
@@ -9,9 +27,9 @@ def get_dashboard_stats():
         "avg_latency_ms": 210,
     }
 
-# --- Dashboard API Usage Trend Endpoint ---
-@app.get("/dashboard/api-usage-trend")
-def get_api_usage_trend():
+# --- Dashboard API Usage Trend Example Endpoint ---
+@app.get("/dashboard/api-usage-trend-example")
+def get_api_usage_trend_example():
     # Example static trend data; replace with real analytics as needed
     return [
         {"date": "2025-09-01", "calls": 100, "latency": 200},

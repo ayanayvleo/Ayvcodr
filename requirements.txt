@@ -9,3 +9,22 @@ textblob
 rake-nltk
 pytest
 python-multipart
+
+# AWS SDK and related dependencies
+boto3
+botocore
+
+# Database drivers
+psycopg2-binary
+alembic
+
+# Monitoring and observability
+aws-xray-sdk
+structlog
+
+# Security and configuration
+python-dotenv
+cryptography
+
+# Health checks and utilities
+psutil
