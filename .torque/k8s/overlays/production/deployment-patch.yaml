@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ayvcodr-api
+  namespace: ayvcodr
+spec:
+  template:
+    spec:
+      containers:
+      - name: ayvcodr-api
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        labels:
+          compute-type: fargate  # Deploy on Fargate in production

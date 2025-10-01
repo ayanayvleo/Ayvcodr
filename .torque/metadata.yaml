@@ -1,10 +1,10 @@
 spec_version: 2.0
 
-description: AyvCodr - AI API Platform with Granular Management and Privacy Toolkit
+description: AyvCodr - AI API Platform with Granular Management and Privacy Toolkit. Supports both ECS Fargate and EKS Kubernetes deployments with comprehensive security and monitoring.
 
 metadata:
-  template_name: ayvcodr-aws-deployment
-  template_version: 1.0.0
+  template_name: ayvcodr-aws-deployment-with-kubernetes
+  template_version: 2.0.0
   
 inputs:
   - domain_name:
@@ -34,6 +34,18 @@ inputs:
       default: "db.t3.micro"
       allowed_values: ["db.t3.micro", "db.t3.small", "db.t3.medium"]
       description: "RDS instance class for PostgreSQL database"
+  
+  - deployment_type:
+      type: string
+      default: "ecs"
+      allowed_values: ["ecs", "eks", "both"]
+      description: "Deployment type: ECS Fargate, EKS Kubernetes, or both"
+  
+  - kubernetes_version:
+      type: string
+      default: "1.28"
+      allowed_values: ["1.27", "1.28", "1.29"]
+      description: "Kubernetes version for EKS cluster"
 
 outputs:
   - frontend_url:
@@ -47,6 +59,21 @@ outputs:
   - database_endpoint:
       value: "{{ .grains.database.outputs.endpoint }}"
       description: "RDS database endpoint"
+  
+  - eks_cluster_name:
+      value: "{{ .grains.eks.outputs.cluster_name }}"
+      description: "EKS cluster name"
+      condition: "{{ eq .inputs.deployment_type 'eks' }} || {{ eq .inputs.deployment_type 'both' }}"
+  
+  - eks_cluster_endpoint:
+      value: "{{ .grains.eks.outputs.cluster_endpoint }}"
+      description: "EKS cluster endpoint"
+      condition: "{{ eq .inputs.deployment_type 'eks' }} || {{ eq .inputs.deployment_type 'both' }}"
+  
+  - kubeconfig_command:
+      value: "aws eks update-kubeconfig --region us-east-1 --name {{ .grains.eks.outputs.cluster_name }}"
+      description: "Command to update kubectl configuration"
+      condition: "{{ eq .inputs.deployment_type 'eks' }} || {{ eq .inputs.deployment_type 'both' }}"
 
 grains:
   # Security Foundation
@@ -125,6 +152,21 @@ grains:
         - backend
         - frontend
 
+  # EKS Kubernetes Cluster (conditional)
+  - eks:
+      kind: terraform
+      spec: infrastructure/eks.tf
+      inputs:
+        - environment: "{{ .inputs.environment }}"
+        - vpc_id: "{{ .grains.networking.outputs.vpc_id }}"
+        - private_subnet_ids: "{{ .grains.networking.outputs.private_subnet_ids }}"
+        - public_subnet_ids: "{{ .grains.networking.outputs.public_subnet_ids }}"
+        - domain_name: "{{ .inputs.domain_name }}"
+      depends_on:
+        - networking
+        - security
+      condition: "{{ eq .inputs.deployment_type 'eks' }} || {{ eq .inputs.deployment_type 'both' }}"
+
   # Monitoring and Logging
   - monitoring:
       kind: terraform
@@ -136,6 +178,7 @@ grains:
         - ecs_service_name: "{{ .grains.backend.outputs.service_name }}"
         - alb_arn: "{{ .grains.load_balancer.outputs.alb_dns_name }}"
         - db_instance_identifier: "ayvcodr-{{ .inputs.environment }}-db"
+        - eks_cluster_name: "{{ .grains.eks.outputs.cluster_name }}"
       depends_on:
         - networking
         - backend

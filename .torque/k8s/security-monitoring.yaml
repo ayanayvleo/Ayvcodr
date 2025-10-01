@@ -1,0 +1,106 @@
+# PodDisruptionBudget to ensure high availability
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ayvcodr-api-pdb
+  namespace: ayvcodr
+  labels:
+    app.kubernetes.io/name: ayvcodr
+    app.kubernetes.io/component: pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ayvcodr
+      app.kubernetes.io/component: api
+---
+# NetworkPolicy for secure pod-to-pod communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ayvcodr-api-netpol
+  namespace: ayvcodr
+  labels:
+    app.kubernetes.io/name: ayvcodr
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ayvcodr
+      app.kubernetes.io/component: api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    - namespaceSelector:
+        matchLabels:
+          name: ayvcodr
+    ports:
+    - protocol: TCP
+      port: 8000
+    - protocol: TCP
+      port: 9090
+  egress:
+  - {} # Allow all egress traffic (can be restricted as needed)
+---
+# ServiceMonitor for Prometheus monitoring
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ayvcodr-api-metrics
+  namespace: ayvcodr
+  labels:
+    app.kubernetes.io/name: ayvcodr
+    app.kubernetes.io/component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ayvcodr
+      app.kubernetes.io/component: service
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+---
+# Secret for pulling images from private registry (if needed)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ayvcodr-registry-secret
+  namespace: ayvcodr
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: ""  # Base64 encoded Docker config JSON
+---
+# RBAC for service account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ayvcodr-role
+  namespace: ayvcodr
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "configmaps"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ayvcodr-role-binding
+  namespace: ayvcodr
+subjects:
+- kind: ServiceAccount
+  name: ayvcodr-service-account
+  namespace: ayvcodr
+roleRef:
+  kind: Role
+  name: ayvcodr-role
+  apiGroup: rbac.authorization.k8s.io

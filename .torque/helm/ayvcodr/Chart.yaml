@@ -1,0 +1,30 @@
+apiVersion: v2
+name: ayvcodr
+description: AyvCodr AI API Platform Helm Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://ayvcodr.com
+sources:
+- https://github.com/ayanayvleo/Ayvcodr
+maintainers:
+- name: AyvCodr Team
+  email: team@ayvcodr.com
+
+keywords:
+- fastapi
+- python
+- ai
+- api
+- kubernetes
+- aws
+
+dependencies:
+- name: postgresql
+  version: 12.x.x
+  repository: https://charts.bitnami.com/bitnami
+  condition: postgresql.enabled
+- name: redis
+  version: 17.x.x
+  repository: https://charts.bitnami.com/bitnami
+  condition: redis.enabled
